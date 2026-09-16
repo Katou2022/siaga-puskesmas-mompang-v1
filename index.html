@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAGA - UPTD Puskesmas Mompang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>.bg-custom { background-size: cover; background-position: center; background-attachment: fixed; }</style>
+</head>
+<body id="appBody" class="bg-slate-100 font-sans text-slate-800 bg-custom min-h-screen">
+
+    <!-- MODAL DETAIL SCAN KAMERA HP TERMASUK FOTO -->
+    <div id="scanDetailModal" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-emerald-500 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-emerald-600 text-white font-bold text-xs px-2.5 py-1 rounded-md">SIAGA</span>
+                    <h3 class="text-base font-bold text-slate-900">Detail Aset Terdeteksi</h3>
+                </div>
+                <button onclick="closeScanModal()" class="text-slate-400 hover:text-red-500 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div id="modalLoading" class="text-center py-8 font-semibold text-emerald-700">
+                ⌛ Menganalisis QR-Code & Mengambil Data Aset...
+            </div>
+
+            <div id="modalContent" class="hidden space-y-3">
+                <!-- DISPLAY FOTO ASET DALAM MODAL SCAN -->
+                <div id="modalFotoContainer" class="h-48 w-full bg-slate-100 rounded-xl overflow-hidden border flex items-center justify-center">
+                    <img id="modalFotoImg" src="" class="h-full w-full object-cover">
+                </div>
+
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                    <p class="text-[10px] font-bold uppercase text-emerald-700">Nama Sarana / Prasarana</p>
+                    <h4 id="modalNama" class="text-lg font-extrabold text-slate-900"></h4>
+                    <p id="modalID" class="text-xs font-mono font-bold text-emerald-800 mt-0.5"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Kode Barang</span>
+                        <strong id="modalKode" class="text-slate-800 font-mono"></strong>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Kondisi Aset</span>
+                        <span id="modalKondisi" class="inline-block font-bold px-2 py-0.5 rounded text-[11px] mt-0.5"></span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Merk / Tipe</span>
+                        <strong id="modalMerk" class="text-slate-800"></strong>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase">Lokasi Ruangan</span>
+                        <strong id="modalLokasi" class="text-slate-800"></strong>
+                    </div>
+                </div>
+
+                <button onclick="closeScanModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-xs mt-2">
+                    Tutup Detail
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center space-y-6">
+            <img id="loginLogoSiaga" src="https://via.placeholder.com/80?text=SIAGA" class="h-20 w-20 rounded-full mx-auto border-2 border-emerald-500 p-1 object-cover">
+            <div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-wider">SIAGA</h2>
+                <p class="text-xs text-slate-500 mt-1">UPTD Puskesmas Mompang</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <input type="text" placeholder="Username" class="w-full border p-3 rounded-lg text-sm" required>
+                <input type="password" placeholder="Password" class="w-full border p-3 rounded-lg text-sm" required>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-lg">Masuk Sistem</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <header class="bg-white/95 backdrop-blur border-b border-slate-200 px-6 py-3 flex flex-wrap justify-between items-center shadow-sm">
+            <div class="flex items-center space-x-4">
+                <img id="headerLogoKop" src="https://via.placeholder.com/60?text=Puskesmas" alt="Logo Kop Surat" class="h-12 w-auto object-contain">
+                <div class="border-l border-slate-300 pl-4 py-0.5">
+                    <h1 class="text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wide leading-tight">PEMERINTAH KABUPATEN MANDAILING NATAL</h1>
+                    <h2 class="text-base md:text-lg font-bold text-emerald-700 leading-snug">UPTD PUSKESMAS MOMPANG</h2>
+                    <p class="text-[11px] font-extrabold text-slate-800 tracking-wider mt-0.5 flex items-center space-x-1.5">
+                        <span class="bg-emerald-600 text-white px-1.5 py-0.5 rounded text-[10px]">SIAGA</span>
+                        <span class="text-slate-500 font-normal">| Sistem Inventarisasi Aset Berbasis QR-Code</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 mt-2 sm:mt-0">
+                <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-3 py-1.5 rounded-full flex items-center space-x-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Admin Puskesmas</span>
+                </span>
+                <button onclick="handleLogout()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold transition shadow-sm">Logout</button>
+            </div>
+        </header>
+
+        <div class="flex-1 flex flex-col md:flex-row">
+            <aside class="w-full md:w-64 bg-slate-900/95 text-slate-300 p-5 space-y-3">
+                <div class="flex items-center space-x-3 mb-6 border-b border-slate-800 pb-4">
+                    <img id="sidebarLogoSiaga" src="https://via.placeholder.com/40?text=SIAGA" class="h-10 w-10 rounded-full object-cover">
+                    <span class="text-2xl font-black text-white tracking-wider">SIAGA</span>
+                </div>
+                <nav class="space-y-1 text-sm font-semibold">
+                    <button onclick="switchTab('entry')" id="nav-entry" class="w-full text-left px-4 py-3 rounded-lg bg-emerald-600 text-white">📝 Entry Aset Baru</button>
+                    <button onclick="switchTab('import')" id="nav-import" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800">📥 Upload Excel</button>
+                    <button onclick="switchTab('scan')" id="nav-scan" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800">📷 Scan Kamera Web</button>
+                    <button onclick="switchTab('laporan')" id="nav-laporan" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800">📋 Laporan PDF</button>
+                    <button onclick="switchTab('settings')" id="nav-settings" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-800">⚙️ Pengaturan UI</button>
+                </nav>
+            </aside>
+
+            <main class="flex-1 p-6 space-y-6">
+                <!-- TAB 1: ENTRY ASET DENGAN UPLOAD FOTO -->
+                <section id="tab-entry" class="bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2">📝 Form Entry Inventaris Aset</h3>
+                    <form onsubmit="handleEntryAset(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="entryAsetID" class="border p-2.5 rounded-lg text-sm bg-slate-100 font-mono" readonly>
+                        <input type="text" id="entryKodeBarang" placeholder="Kode Barang (Contoh: 1010101001)" class="border p-2.5 rounded-lg text-sm" required>
+                        <input type="text" id="entryNamaBarang" placeholder="Nama Sarana/Prasarana" class="border p-2.5 rounded-lg text-sm" required>
+                        <input type="text" id="entryMerkTipe" placeholder="Merk / Tipe" class="border p-2.5 rounded-lg text-sm" required>
+                        <input type="text" id="entryLokasi" placeholder="Lokasi Ruangan" class="border p-2.5 rounded-lg text-sm" required>
+                        <select id="entryKondisi" class="border p-2.5 rounded-lg text-sm font-semibold" required>
+                            <option value="Baik" class="text-emerald-600">🟢 Baik</option>
+                            <option value="Rusak Ringan" class="text-amber-500">🟡 Rusak Ringan</option>
+                            <option value="Rusak Sedang" class="text-orange-500">🟠 Rusak Sedang</option>
+                            <option value="Rusak Berat" class="text-red-600">🔴 Rusak Berat</option>
+                        </select>
+                        <input type="number" id="entryTahun" value="2026" class="border p-2.5 rounded-lg text-sm" required>
+                        
+                        <!-- FITUR INPUT FOTO ASET -->
+                        <div class="border border-dashed border-slate-300 p-3 rounded-lg bg-slate-50 flex items-center justify-between">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700">Foto Fisik Aset</label>
+                                <span id="fotoStatus" class="text-[10px] text-slate-500 block">Belum ada foto dipilih</span>
+                            </div>
+                            <input type="file" id="entryFotoInput" accept="image/*" class="hidden" onchange="handleFotoSelected(event)">
+                            <label for="entryFotoInput" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-md font-bold">Pilih Foto</label>
+                        </div>
+
+                        <button type="submit" class="md:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow">Simpan Aset & Generate QR-Code</button>
+                    </form>
+
+                    <div id="qrOutputCard" class="mt-6 hidden p-4 bg-slate-50 border rounded-xl text-center">
+                        <div id="qrcodeCanvas" class="flex justify-center my-2"></div>
+                        <p id="qrOutputLabel" class="text-xs font-mono font-bold text-slate-600"></p>
+                    </div>
+                </section>
+
+                <section id="tab-import" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
+                    <h3 class="text-xl font-bold border-b pb-2">📥 Upload File Excel Aset</h3>
+                    <div class="border-2 border-dashed p-8 rounded-xl text-center bg-slate-50">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                        <label for="excelFileInput" class="cursor-pointer bg-slate-800 text-white text-xs px-5 py-3 rounded-lg font-bold shadow">Pilih File Excel</label>
+                        <p id="excelFileName" class="text-xs font-mono text-slate-600 mt-2">Belum ada file dipilih.</p>
+                    </div>
+                </section>
+
+                <section id="tab-scan" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
+                    <h3 class="text-xl font-bold border-b pb-2">📷 Pemindai QR-Code Web</h3>
+                    <div class="max-w-md mx-auto space-y-4">
+                        <div id="qr-reader" class="rounded-xl overflow-hidden border"></div>
+                        <div id="scanOutputCard" class="hidden p-4 bg-emerald-50 border text-slate-800 rounded-xl font-semibold text-sm"></div>
+                    </div>
+                </section>
+
+                <section id="tab-laporan" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h3 class="text-xl font-bold">📋 Daftar Inventaris Aset</h3>
+                        <button onclick="downloadPDFLaporan()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2.5 rounded-lg font-bold shadow">📄 Download PDF</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-800 text-white uppercase text-[10px]">
+                                <tr><th class="p-3">ID Aset</th><th class="p-3">Foto</th><th class="p-3">Kode</th><th class="p-3">Nama Barang</th><th class="p-3">Merk</th><th class="p-3">Lokasi</th><th class="p-3">Kondisi</th><th class="p-3">Tahun</th></tr>
+                            </thead>
+                            <tbody id="tableAsetBody" class="divide-y font-medium"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tab-settings" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-6">
+                    <div class="border-b pb-2 flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-slate-800">⚙️ Pengaturan UI SIAGA</h3>
+                        <button onclick="resetDefaultUI()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg">Reset Default UI</button>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script API</label>
+                        <input type="text" id="settingAppsScriptUrl" onchange="saveApiUrl()" class="w-full border p-2.5 rounded-lg text-sm font-mono" placeholder="Paste URL Apps Script di sini">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                        <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase">Logo Kop Surat Header</h4>
+                            <div class="h-24 flex items-center justify-center bg-white border rounded-lg p-2">
+                                <img id="previewKop" src="https://via.placeholder.com/150?text=Logo+Kop" class="max-h-full max-w-full object-contain">
+                            </div>
+                            <input type="file" id="uploadFileKop" accept="image/*" class="hidden" onchange="processImageUpload(event, 'kop')">
+                            <label for="uploadFileKop" class="cursor-pointer bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold block w-full">Upload Kop Surat</label>
+                        </div>
+                        <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase">Logo Aplikasi SIAGA</h4>
+                            <div class="h-24 flex items-center justify-center bg-white border rounded-lg p-2">
+                                <img id="previewSiaga" src="https://via.placeholder.com/150?text=Logo+SIAGA" class="max-h-full max-w-full object-contain">
+                            </div>
+                            <input type="file" id="uploadFileSiaga" accept="image/*" class="hidden" onchange="processImageUpload(event, 'siaga')">
+                            <label for="uploadFileSiaga" class="cursor-pointer bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold block w-full">Upload Logo SIAGA</label>
+                        </div>
+                        <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-800 uppercase">Background Web</h4>
+                            <div class="h-24 flex items-center justify-center bg-white border rounded-lg p-2 overflow-hidden bg-cover bg-center" id="previewBgBox">
+                                <span class="text-[10px] text-slate-400 font-mono">Preview Background</span>
+                            </div>
+                            <input type="file" id="uploadFileBg" accept="image/*" class="hidden" onchange="processImageUpload(event, 'bg')">
+                            <label for="uploadFileBg" class="cursor-pointer bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold block w-full">Upload Background</label>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let assetDataStore = [];
+        let selectedFotoBase64 = "";
+        let html5QrcodeScanner = null;
+
+        window.onload = function() {
+            generateNextAssetID();
+            renderTableAset();
+            loadSettingsAndUI();
+            checkDirectUrlScan();
+        };
+
+        function handleFotoSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fotoStatus').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 800;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        } else {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    selectedFotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkDirectUrlScan() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const assetId = urlParams.get('id');
+
+            if (assetId) {
+                document.getElementById('scanDetailModal').classList.remove('hidden');
+                const scriptUrl = localStorage.getItem('siaga_script_url');
+                if (scriptUrl) {
+                    fetch(`${scriptUrl}?id=${assetId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === "success" && data.asset) {
+                                renderModalData(data.asset);
+                            } else {
+                                alert("Data Aset tidak ditemukan di database!");
+                                closeScanModal();
+                            }
+                        }).catch(() => closeScanModal());
+                } else {
+                    alert("URL API belum dikonfigurasi!");
+                    closeScanModal();
+                }
+            }
+        }
+
+        function renderModalData(asset) {
+            document.getElementById('modalNama').innerText = asset.nama;
+            document.getElementById('modalID').innerText = asset.id;
+            document.getElementById('modalKode').innerText = asset.kode;
+            document.getElementById('modalMerk').innerText = asset.merk;
+            document.getElementById('modalLokasi').innerText = asset.lokasi;
+
+            if (asset.foto_url) {
+                document.getElementById('modalFotoImg').src = asset.foto_url;
+                document.getElementById('modalFotoContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('modalFotoContainer').classList.add('hidden');
+            }
+
+            const kondisiElem = document.getElementById('modalKondisi');
+            kondisiElem.innerText = asset.kondisi;
+            if (asset.kondisi === "Baik") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-emerald-100 text-emerald-800";
+            else if (asset.kondisi === "Rusak Ringan") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-amber-100 text-amber-800";
+            else if (asset.kondisi === "Rusak Sedang") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-orange-100 text-orange-800";
+            else kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-red-100 text-red-800";
+
+            document.getElementById('modalLoading').classList.add('hidden');
+            document.getElementById('modalContent').classList.remove('hidden');
+        }
+
+        function closeScanModal() {
+            document.getElementById('scanDetailModal').classList.add('hidden');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+
+        function handleLogout() {
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function switchTab(tabName) {
+            ['entry', 'import', 'scan', 'laporan', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('bg-emerald-600', 'text-white');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).classList.add('bg-emerald-600', 'text-white');
+
+            if(tabName === 'scan' && !html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+                html5QrcodeScanner.render((text) => {
+                    document.getElementById('scanOutputCard').classList.remove('hidden');
+                    document.getElementById('scanOutputCard').innerText = `Aset Terdeteksi: ${text}`;
+                });
+            }
+        }
+
+        function generateNextAssetID() {
+            document.getElementById('entryAsetID').value = `AST-${String(assetDataStore.length + 1).padStart(3, '0')}`;
+        }
+
+        function handleEntryAset(e) {
+            e.preventDefault();
+            const id = document.getElementById('entryAsetID').value;
+            const kode = document.getElementById('entryKodeBarang').value;
+            const nama = document.getElementById('entryNamaBarang').value;
+            const merk = document.getElementById('entryMerkTipe').value;
+            const lokasi = document.getElementById('entryLokasi').value;
+            const kondisi = document.getElementById('entryKondisi').value;
+            const tahun = document.getElementById('entryTahun').value;
+
+            const newAsset = { id, kode, nama, merk, lokasi, kondisi, tahun, foto_base64: selectedFotoBase64 };
+            assetDataStore.push(newAsset);
+
+            const currentWebUrl = window.location.href.split('?')[0];
+            const directTargetUrl = `${currentWebUrl}?id=${id}`;
+
+            const qrCanvas = document.getElementById('qrcodeCanvas');
+            qrCanvas.innerHTML = "";
+            new QRCode(qrCanvas, { text: directTargetUrl, width: 140, height: 140 });
+
+            document.getElementById('qrOutputLabel').innerText = `${id} - ${nama} (${kondisi})`;
+            document.getElementById('qrOutputCard').classList.remove('hidden');
+
+            sendToAppsScript(newAsset, currentWebUrl);
+            renderTableAset();
+            generateNextAssetID();
+            
+            selectedFotoBase64 = "";
+            document.getElementById('fotoStatus').innerText = "Belum ada foto dipilih";
+            alert("Aset & Foto Berhasil Disimpan!");
+        }
+
+        function renderTableAset() {
+            const tbody = document.getElementById('tableAsetBody');
+            tbody.innerHTML = "";
+            assetDataStore.forEach(item => {
+                let badge = "bg-emerald-100 text-emerald-800";
+                if(item.kondisi === "Rusak Ringan") badge = "bg-amber-100 text-amber-800";
+                if(item.kondisi === "Rusak Sedang") badge = "bg-orange-100 text-orange-800";
+                if(item.kondisi === "Rusak Berat") badge = "bg-red-100 text-red-800";
+
+                let fotoThumb = item.foto_base64 ? `<img src="${item.foto_base64}" class="h-8 w-8 object-cover rounded">` : `-`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-mono font-bold">${item.id}</td>
+                        <td class="p-3">${fotoThumb}</td>
+                        <td class="p-3 font-mono">${item.kode}</td>
+                        <td class="p-3 font-bold">${item.nama}</td>
+                        <td class="p-3">${item.merk}</td>
+                        <td class="p-3">${item.lokasi}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${badge}">${item.kondisi}</span></td>
+                        <td class="p-3">${item.tahun}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('excelFileName').innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                jsonData.forEach((row, idx) => {
+                    assetDataStore.push({
+                        id: row['ID Aset'] || `AST-X${idx+1}`,
+                        kode: row['Kode Barang'] || '1010101000',
+                        nama: row['Nama Sarana / Prasarana'] || row['Nama Barang'] || 'Barang Import',
+                        merk: row['Merk / Tipe'] || '-',
+                        lokasi: row['Lokasi Ruangan'] || 'Gudang',
+                        kondisi: row['Kondisi Aset'] || 'Baik',
+                        tahun: row['Tahun Pengadaan'] || 2026,
+                        foto_base64: ""
+                    });
+                });
+                renderTableAset();
+                alert(`Otomatis mengimpor ${jsonData.length} barang dari Excel!`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function downloadPDFLaporan() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(12).setFont("helvetica", "bold");
+            doc.text("PEMERINTAH KABUPATEN MANDAILING NATAL", 105, 15, null, null, "center");
+            doc.setFontSize(14);
+            doc.text("UPTD PUSKESMAS MOMPANG", 105, 22, null, null, "center");
+            doc.setFontSize(9).setFont("helvetica", "normal");
+            doc.text("SIAGA (Sistem Inventarisasi Aset Berbasis QR-Code)", 105, 27, null, null, "center");
+            doc.line(14, 31, 196, 31);
+
+            const rows = assetDataStore.map(a => [a.id, a.kode, a.nama, a.merk, a.lokasi, a.kondisi, a.tahun]);
+            doc.autoTable({
+                startY: 38,
+                head: [['ID Aset', 'Kode', 'Nama Barang', 'Merk/Tipe', 'Lokasi', 'Kondisi', 'Tahun']],
+                body: rows,
+                theme: 'striped',
+                headStyles: { fillColor: [5, 150, 105] }
+            });
+            doc.save("Laporan_Aset_SIAGA_Puskesmas_Mompang.pdf");
+        }
+
+        function processImageUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = type === 'bg' ? 1200 : 400;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        } else {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+                    if (type === 'kop') localStorage.setItem('upload_logo_kop', compressedBase64);
+                    else if (type === 'siaga') localStorage.setItem('upload_logo_siaga', compressedBase64);
+                    else if (type === 'bg') localStorage.setItem('upload_bg_web', compressedBase64);
+
+                    loadSettingsAndUI();
+                    alert(`Gambar ${type.toUpperCase()} Diperbarui!`);
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadSettingsAndUI() {
+            document.getElementById('settingAppsScriptUrl').value = localStorage.getItem('siaga_script_url') || '';
+
+            const kop = localStorage.getItem('upload_logo_kop');
+            const siaga = localStorage.getItem('upload_logo_siaga');
+            const bg = localStorage.getItem('upload_bg_web');
+
+            if (kop) {
+                document.getElementById('headerLogoKop').src = kop;
+                document.getElementById('previewKop').src = kop;
+            }
+            if (siaga) {
+                document.getElementById('loginLogoSiaga').src = siaga;
+                document.getElementById('sidebarLogoSiaga').src = siaga;
+                document.getElementById('previewSiaga').src = siaga;
+            }
+            if (bg) {
+                document.getElementById('appBody').style.backgroundImage = `url('${bg}')`;
+                document.getElementById('previewBgBox').style.backgroundImage = `url('${bg}')`;
+            }
+        }
+
+        function resetDefaultUI() {
+            localStorage.removeItem('upload_logo_kop');
+            localStorage.removeItem('upload_logo_siaga');
+            localStorage.removeItem('upload_bg_web');
+            location.reload();
+        }
+
+        function saveApiUrl() {
+            localStorage.setItem('siaga_script_url', document.getElementById('settingAppsScriptUrl').value);
+        }
+
+        function sendToAppsScript(data, webUrl) {
+            const scriptUrl = localStorage.getItem('siaga_script_url');
+            if(!scriptUrl) return;
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_aset: data.id,
+                    kode_barang: data.kode,
+                    nama_barang: data.nama,
+                    merk_tipe: data.merk,
+                    lokasi_ruangan: data.lokasi,
+                    kondisi_aset: data.kondisi,
+                    tahun_pengadaan: data.tahun,
+                    foto_base64: data.foto_base64,
+                    web_url: webUrl
+                })
+            });
+        }
+    </script>
+</body>
+</html>
