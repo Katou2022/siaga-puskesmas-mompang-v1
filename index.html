@@ -14,9 +14,9 @@
 </head>
 <body id="appBody" class="bg-slate-100 font-sans text-slate-800 bg-custom min-h-screen">
 
-    <!-- MODAL DETAIL SCAN KAMERA HP TERMASUK FOTO -->
+    <!-- MODAL DIRECT DETAIL SCAN KAMERA HP -->
     <div id="scanDetailModal" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-emerald-500 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-emerald-500">
             <div class="flex justify-between items-center border-b pb-3">
                 <div class="flex items-center space-x-2">
                     <span class="bg-emerald-600 text-white font-bold text-xs px-2.5 py-1 rounded-md">SIAGA</span>
@@ -30,11 +30,6 @@
             </div>
 
             <div id="modalContent" class="hidden space-y-3">
-                <!-- DISPLAY FOTO ASET DALAM MODAL SCAN -->
-                <div id="modalFotoContainer" class="h-48 w-full bg-slate-100 rounded-xl overflow-hidden border flex items-center justify-center">
-                    <img id="modalFotoImg" src="" class="h-full w-full object-cover">
-                </div>
-
                 <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
                     <p class="text-[10px] font-bold uppercase text-emerald-700">Nama Sarana / Prasarana</p>
                     <h4 id="modalNama" class="text-lg font-extrabold text-slate-900"></h4>
@@ -85,6 +80,7 @@
 
     <!-- MAIN APP CONTAINER -->
     <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <!-- HEADER DASHBOARD -->
         <header class="bg-white/95 backdrop-blur border-b border-slate-200 px-6 py-3 flex flex-wrap justify-between items-center shadow-sm">
             <div class="flex items-center space-x-4">
                 <img id="headerLogoKop" src="https://via.placeholder.com/60?text=Puskesmas" alt="Logo Kop Surat" class="h-12 w-auto object-contain">
@@ -107,6 +103,7 @@
         </header>
 
         <div class="flex-1 flex flex-col md:flex-row">
+            <!-- SIDEBAR NAVIGASI -->
             <aside class="w-full md:w-64 bg-slate-900/95 text-slate-300 p-5 space-y-3">
                 <div class="flex items-center space-x-3 mb-6 border-b border-slate-800 pb-4">
                     <img id="sidebarLogoSiaga" src="https://via.placeholder.com/40?text=SIAGA" class="h-10 w-10 rounded-full object-cover">
@@ -121,8 +118,9 @@
                 </nav>
             </aside>
 
+            <!-- MAIN CONTENT AREA -->
             <main class="flex-1 p-6 space-y-6">
-                <!-- TAB 1: ENTRY ASET DENGAN UPLOAD FOTO -->
+                <!-- TAB 1: ENTRY ASET -->
                 <section id="tab-entry" class="bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border">
                     <h3 class="text-xl font-bold mb-4 border-b pb-2">📝 Form Entry Inventaris Aset</h3>
                     <form onsubmit="handleEntryAset(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,26 +136,15 @@
                             <option value="Rusak Berat" class="text-red-600">🔴 Rusak Berat</option>
                         </select>
                         <input type="number" id="entryTahun" value="2026" class="border p-2.5 rounded-lg text-sm" required>
-                        
-                        <!-- FITUR INPUT FOTO ASET -->
-                        <div class="border border-dashed border-slate-300 p-3 rounded-lg bg-slate-50 flex items-center justify-between">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700">Foto Fisik Aset</label>
-                                <span id="fotoStatus" class="text-[10px] text-slate-500 block">Belum ada foto dipilih</span>
-                            </div>
-                            <input type="file" id="entryFotoInput" accept="image/*" class="hidden" onchange="handleFotoSelected(event)">
-                            <label for="entryFotoInput" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-md font-bold">Pilih Foto</label>
-                        </div>
-
-                        <button type="submit" class="md:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow">Simpan Aset & Generate QR-Code</button>
+                        <button type="submit" class="md:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow">Simpan Aset & Generate Direct QR-Code</button>
                     </form>
-
                     <div id="qrOutputCard" class="mt-6 hidden p-4 bg-slate-50 border rounded-xl text-center">
                         <div id="qrcodeCanvas" class="flex justify-center my-2"></div>
                         <p id="qrOutputLabel" class="text-xs font-mono font-bold text-slate-600"></p>
                     </div>
                 </section>
 
+                <!-- TAB 2: IMPORT EXCEL -->
                 <section id="tab-import" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
                     <h3 class="text-xl font-bold border-b pb-2">📥 Upload File Excel Aset</h3>
                     <div class="border-2 border-dashed p-8 rounded-xl text-center bg-slate-50">
@@ -167,6 +154,7 @@
                     </div>
                 </section>
 
+                <!-- TAB 3: SCANNER WEB -->
                 <section id="tab-scan" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
                     <h3 class="text-xl font-bold border-b pb-2">📷 Pemindai QR-Code Web</h3>
                     <div class="max-w-md mx-auto space-y-4">
@@ -175,6 +163,7 @@
                     </div>
                 </section>
 
+                <!-- TAB 4: LAPORAN PDF -->
                 <section id="tab-laporan" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-4">
                     <div class="flex justify-between items-center border-b pb-2">
                         <h3 class="text-xl font-bold">📋 Daftar Inventaris Aset</h3>
@@ -183,22 +172,25 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-800 text-white uppercase text-[10px]">
-                                <tr><th class="p-3">ID Aset</th><th class="p-3">Foto</th><th class="p-3">Kode</th><th class="p-3">Nama Barang</th><th class="p-3">Merk</th><th class="p-3">Lokasi</th><th class="p-3">Kondisi</th><th class="p-3">Tahun</th></tr>
+                                <tr><th class="p-3">ID Aset</th><th class="p-3">Kode</th><th class="p-3">Nama Barang</th><th class="p-3">Merk</th><th class="p-3">Lokasi</th><th class="p-3">Kondisi</th><th class="p-3">Tahun</th></tr>
                             </thead>
                             <tbody id="tableAsetBody" class="divide-y font-medium"></tbody>
                         </table>
                     </div>
                 </section>
 
+                <!-- TAB 5: SETTINGS -->
                 <section id="tab-settings" class="hidden bg-white/95 backdrop-blur p-6 rounded-2xl shadow-sm border space-y-6">
                     <div class="border-b pb-2 flex justify-between items-center">
                         <h3 class="text-xl font-bold text-slate-800">⚙️ Pengaturan UI SIAGA</h3>
                         <button onclick="resetDefaultUI()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg">Reset Default UI</button>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script API</label>
-                        <input type="text" id="settingAppsScriptUrl" onchange="saveApiUrl()" class="w-full border p-2.5 rounded-lg text-sm font-mono" placeholder="Paste URL Apps Script di sini">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script API (Otomatis)</label>
+                        <input type="text" id="settingAppsScriptUrl" class="w-full border p-2.5 rounded-lg text-sm font-mono bg-slate-100" readonly>
                     </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                         <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
                             <h4 class="text-xs font-bold text-slate-800 uppercase">Logo Kop Surat Header</h4>
@@ -208,6 +200,7 @@
                             <input type="file" id="uploadFileKop" accept="image/*" class="hidden" onchange="processImageUpload(event, 'kop')">
                             <label for="uploadFileKop" class="cursor-pointer bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold block w-full">Upload Kop Surat</label>
                         </div>
+
                         <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
                             <h4 class="text-xs font-bold text-slate-800 uppercase">Logo Aplikasi SIAGA</h4>
                             <div class="h-24 flex items-center justify-center bg-white border rounded-lg p-2">
@@ -216,6 +209,7 @@
                             <input type="file" id="uploadFileSiaga" accept="image/*" class="hidden" onchange="processImageUpload(event, 'siaga')">
                             <label for="uploadFileSiaga" class="cursor-pointer bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-bold block w-full">Upload Logo SIAGA</label>
                         </div>
+
                         <div class="border border-slate-200 p-4 rounded-xl text-center bg-slate-50 space-y-3">
                             <h4 class="text-xs font-bold text-slate-800 uppercase">Background Web</h4>
                             <div class="h-24 flex items-center justify-center bg-white border rounded-lg p-2 overflow-hidden bg-cover bg-center" id="previewBgBox">
@@ -230,63 +224,80 @@
         </div>
     </div>
 
+    <!-- JAVASCRIPT AUTOMATED API CONFIG & SCAN ENGINE -->
     <script>
-        let assetDataStore = [];
-        let selectedFotoBase64 = "";
+        // ====================================================================
+        // URL WEB APP APPS SCRIPT ANDA DITANAM SECARA OTOMATIS DI SINI
+        // ====================================================================
+        const AUTOMATED_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz.../exec"; 
+        // (Catatan: Jika nanti Anda mengubah/deploy ulang Apps Script, cukup ganti teks di dalam tanda kutip di atas dengan URL /exec yang baru)
+
+        let assetDataStore = [
+            { id: "AST-001", kode: "1010101001", nama: "Tensimeter Digital", merk: "Omron HEM-7120", lokasi: "Poli Umum", kondisi: "Baik", tahun: 2023 },
+            { id: "AST-002", kode: "1010101002", nama: "Stetoskop Duplex", merk: "Riester", lokasi: "Poli KIA/KB", kondisi: "Baik", tahun: 2022 },
+            { id: "AST-003", kode: "1010101003", nama: "Timbangan Badan Digital", merk: "GEA Medical", lokasi: "Poli Gizi", kondisi: "Rusak Ringan", tahun: 2021 }
+        ];
+
         let html5QrcodeScanner = null;
 
         window.onload = function() {
+            // Set otomatis API URL ke storage & UI
+            localStorage.setItem('siaga_script_url', AUTOMATED_APPS_SCRIPT_URL);
+            
             generateNextAssetID();
             renderTableAset();
             loadSettingsAndUI();
             checkDirectUrlScan();
+            fetchDataFromServer();
         };
 
-        function handleFotoSelected(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        // AMBIL DATA DARI GOOGLE SHEETS SERVER
+        function fetchDataFromServer() {
+            const scriptUrl = localStorage.getItem('siaga_script_url');
+            if (!scriptUrl || scriptUrl.includes("AKfycbz...")) return;
 
-            document.getElementById('fotoStatus').innerText = file.name;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 800;
-
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height *= maxDim / width;
-                            width = maxDim;
-                        } else {
-                            width *= maxDim / height;
-                            height = maxDim;
+            fetch(scriptUrl)
+                .then(res => res.json())
+                .then(response => {
+                    if (response.status === "success" && Array.isArray(response.data) && response.data.length > 1) {
+                        let serverAssets = [];
+                        // Lewati baris indeks 0 (Header tabel)
+                        for (let i = 1; i < response.data.length; i++) {
+                            let row = response.data[i];
+                            if (row[0]) {
+                                serverAssets.push({
+                                    id: row[0],
+                                    kode: row[1],
+                                    nama: row[2],
+                                    merk: row[3],
+                                    lokasi: row[4],
+                                    kondisi: row[5],
+                                    tahun: row[6]
+                                });
+                            }
+                        }
+                        if (serverAssets.length > 0) {
+                            assetDataStore = serverAssets;
+                            renderTableAset();
+                            generateNextAssetID();
                         }
                     }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    selectedFotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                };
-            };
-            reader.readAsDataURL(file);
+                }).catch(err => console.log("Gagal menyinkronkan data server: ", err));
         }
 
+        // METODE DETEKSI DIRECT SCAN KAMERA HP (?id=AST-xxx)
         function checkDirectUrlScan() {
             const urlParams = new URLSearchParams(window.location.search);
             const assetId = urlParams.get('id');
 
             if (assetId) {
                 document.getElementById('scanDetailModal').classList.remove('hidden');
-                const scriptUrl = localStorage.getItem('siaga_script_url');
-                if (scriptUrl) {
+                
+                const localAsset = assetDataStore.find(a => a.id === assetId);
+                if (localAsset) {
+                    renderModalData(localAsset);
+                } else {
+                    const scriptUrl = localStorage.getItem('siaga_script_url');
                     fetch(`${scriptUrl}?id=${assetId}`)
                         .then(res => res.json())
                         .then(data => {
@@ -297,9 +308,6 @@
                                 closeScanModal();
                             }
                         }).catch(() => closeScanModal());
-                } else {
-                    alert("URL API belum dikonfigurasi!");
-                    closeScanModal();
                 }
             }
         }
@@ -311,15 +319,9 @@
             document.getElementById('modalMerk').innerText = asset.merk;
             document.getElementById('modalLokasi').innerText = asset.lokasi;
 
-            if (asset.foto_url) {
-                document.getElementById('modalFotoImg').src = asset.foto_url;
-                document.getElementById('modalFotoContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('modalFotoContainer').classList.add('hidden');
-            }
-
             const kondisiElem = document.getElementById('modalKondisi');
             kondisiElem.innerText = asset.kondisi;
+            
             if (asset.kondisi === "Baik") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-emerald-100 text-emerald-800";
             else if (asset.kondisi === "Rusak Ringan") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-amber-100 text-amber-800";
             else if (asset.kondisi === "Rusak Sedang") kondisiElem.className = "inline-block font-bold px-2 py-0.5 rounded text-[11px] bg-orange-100 text-orange-800";
@@ -377,7 +379,7 @@
             const kondisi = document.getElementById('entryKondisi').value;
             const tahun = document.getElementById('entryTahun').value;
 
-            const newAsset = { id, kode, nama, merk, lokasi, kondisi, tahun, foto_base64: selectedFotoBase64 };
+            const newAsset = { id, kode, nama, merk, lokasi, kondisi, tahun };
             assetDataStore.push(newAsset);
 
             const currentWebUrl = window.location.href.split('?')[0];
@@ -393,10 +395,7 @@
             sendToAppsScript(newAsset, currentWebUrl);
             renderTableAset();
             generateNextAssetID();
-            
-            selectedFotoBase64 = "";
-            document.getElementById('fotoStatus').innerText = "Belum ada foto dipilih";
-            alert("Aset & Foto Berhasil Disimpan!");
+            alert("Aset tersimpan & Direct QR-Code siap dicetak!");
         }
 
         function renderTableAset() {
@@ -408,12 +407,9 @@
                 if(item.kondisi === "Rusak Sedang") badge = "bg-orange-100 text-orange-800";
                 if(item.kondisi === "Rusak Berat") badge = "bg-red-100 text-red-800";
 
-                let fotoThumb = item.foto_base64 ? `<img src="${item.foto_base64}" class="h-8 w-8 object-cover rounded">` : `-`;
-
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50">
                         <td class="p-3 font-mono font-bold">${item.id}</td>
-                        <td class="p-3">${fotoThumb}</td>
                         <td class="p-3 font-mono">${item.kode}</td>
                         <td class="p-3 font-bold">${item.nama}</td>
                         <td class="p-3">${item.merk}</td>
@@ -442,8 +438,7 @@
                         merk: row['Merk / Tipe'] || '-',
                         lokasi: row['Lokasi Ruangan'] || 'Gudang',
                         kondisi: row['Kondisi Aset'] || 'Baik',
-                        tahun: row['Tahun Pengadaan'] || 2026,
-                        foto_base64: ""
+                        tahun: row['Tahun Pengadaan'] || 2026
                     });
                 });
                 renderTableAset();
@@ -517,7 +512,7 @@
         }
 
         function loadSettingsAndUI() {
-            document.getElementById('settingAppsScriptUrl').value = localStorage.getItem('siaga_script_url') || '';
+            document.getElementById('settingAppsScriptUrl').value = localStorage.getItem('siaga_script_url') || AUTOMATED_APPS_SCRIPT_URL;
 
             const kop = localStorage.getItem('upload_logo_kop');
             const siaga = localStorage.getItem('upload_logo_siaga');
@@ -545,10 +540,6 @@
             location.reload();
         }
 
-        function saveApiUrl() {
-            localStorage.setItem('siaga_script_url', document.getElementById('settingAppsScriptUrl').value);
-        }
-
         function sendToAppsScript(data, webUrl) {
             const scriptUrl = localStorage.getItem('siaga_script_url');
             if(!scriptUrl) return;
@@ -564,7 +555,6 @@
                     lokasi_ruangan: data.lokasi,
                     kondisi_aset: data.kondisi,
                     tahun_pengadaan: data.tahun,
-                    foto_base64: data.foto_base64,
                     web_url: webUrl
                 })
             });
